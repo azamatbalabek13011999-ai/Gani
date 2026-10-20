@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EV3 робот: бағдарламалау</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--tx:#1b2430;--mut:#5b6878;--ac:#2563eb;--ok:#16a34a;--bad:#dc2626;--bd:#d8e0ea;--cell:#eaf1fb;--wall:#475569;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1520;--card:#18212f;--tx:#e8eef7;--mut:#9aa8bb;--bd:#2a3648;--cell:#1f2b3d;--wall:#94a3b8;--ac:#60a5fa}}
+:root[data-theme="dark"]{--bg:#0f1520;--card:#18212f;--tx:#e8eef7;--mut:#9aa8bb;--bd:#2a3648;--cell:#1f2b3d;--wall:#94a3b8;--ac:#60a5fa}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:4px 0}
+h2{font-size:1.1rem;margin:0 0 8px}
+p.sub{color:var(--mut);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tab,.btn,.blk{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px;cursor:pointer}
+.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.palette{display:flex;flex-wrap:wrap;gap:8px}
+.blk{font-weight:600}
+.blk:hover{border-color:var(--ac)}
+.blk.loop{border-style:dashed}
+#prog{min-height:150px;max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.step{display:flex;justify-content:space-between;align-items:center;background:var(--cell);border-radius:8px;padding:6px 10px;border-left:5px solid var(--ac)}
+.step.run{outline:3px solid #f59e0b}
+.step button{border:0;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer}
+.empty{color:var(--mut);padding:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn.go{background:var(--ok);color:#fff;border-color:var(--ok);font-weight:700}
+.btn.rs{background:var(--bad);color:#fff;border-color:var(--bad)}
+canvas{width:100%;height:auto;border-radius:10px;border:1px solid var(--bd);background:var(--cell);display:block}
+#msg{margin-top:10px;font-weight:700;min-height:1.5em}
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.part{background:var(--cell);border-radius:10px;padding:10px}
+.part b{display:block}
+.ev3{font-family:ui-monospace,Consolas,monospace;font-size:.85rem;background:var(--cell);border-radius:10px;padding:10px;overflow-x:auto;white-space:pre;margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🤖 EV3 робот: бағдарлама құрайық!</h1>
+<p class="sub">Блоктарды басып бағдарлама жаса, роботты жалауға жеткіз 🚩</p>
+
+<div class="card">
+<div class="tabs" id="tabs"></div>
+<div id="task" style="margin-bottom:6px"></div>
+</div>
+
+<div class="grid">
+<div class="card">
+<h2>1. Блоктар</h2>
+<div class="palette" id="pal"></div>
+<h2 style="margin-top:14px">2. Менің бағдарламам</h2>
+<div id="prog"></div>
+<div class="row">
+<button class="btn go" id="run">▶ Іске қосу</button>
+<button class="btn" id="undo">↩ Соңғысын өшір</button>
+<button class="btn rs" id="clear">🗑 Тазалау</button>
+</div>
+</div>
+<div class="card">
+<h2>3. Робот өрісі</h2>
+<canvas id="cv" width="480" height="400"></canvas>
+<div id="msg"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>EV3 бөлшектері</h2>
+<div class="parts">
+<div class="part"><b>🧠 EV3 блогы</b>Роботтың «миы». Бағдарлама осында жұмыс істейді.</div>
+<div class="part"><b>⚙️ Қозғалтқыш</b>Дөңгелектерді айналдырып, роботты жүргізеді.</div>
+<div class="part"><b>👁 Түс датчигі</b>Түсті көреді, сызықты табады.</div>
+<div class="part"><b>📏 Ультрадыбыс датчигі</b>Кедергіге дейінгі қашықтықты өлшейді.</div>
+<div class="part"><b>🖐 Жанасу датчигі</b>Қабырғаға тиіп кеткенін сезеді.</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Блоктар EV3 бағдарламасында қалай көрінеді?</h2>
+<pre class="ev3">Алға жүр      → «Move Steering» блогы (1 айналым)
+Солға бұрыл   → «Move Steering» блогы (рульдік мән -100)
+Қайталау ×3   → «Loop» блогы (3 рет)
+Дыбыс шығар   → «Sound» блогы
+Егер кедергі  → «Switch» блогы + ультрадыбыс датчигі</pre>
+</div>
+</div>
+
+<script>
+var W=6,H=5,S=80;
+var levels=[
+{n:"1-тапсырма: түзу жүр",t:"Роботты жалауға дейін жеткіз. Кеңес: «Алға» блогын бірнеше рет бас.",sx:0,sy:2,d:1,fx:4,fy:2,w:[]},
+{n:"2-тапсырма: кедергіні айналып өт",t:"Сұр қабырғаға соқпа! Бұрылыс блоктарын пайдалан.",sx:0,sy:0,d:1,fx:3,fy:2,w:[[2,0],[2,1]]},
+{n:"3-тапсырма: қайталау (цикл)",t:"Баспалдақпен көтерілу керек. «Қайталау» блогын қолдан: сонда бағдарлама қысқа болады!",sx:0,sy:4,d:0,fx:3,fy:1,w:[]}
+];
+var cmds={
+f:{l:"⬆ Алға жүр"},b:{l:"⬇ Артқа жүр"},L:{l:"↰ Солға бұрыл"},R:{l:"↱ Оңға бұрыл"},
+s:{l:"🔔 Дыбыс шығар"},r2:{l:"🔁 Қайталау ×2 ▸",loop:2},r3:{l:"🔁 Қайталау ×3 ▸",loop:3},e:{l:"◂ Цикл соңы"}
+};
+var lv=0,prog=[],rb,busy=false;
+var cv=document.getElementById("cv"),cx=cv.getContext("2d");
+var $=function(i){return document.getElementById(i)};
+
+function reset(){var L=levels[lv];rb={x:L.sx,y:L.sy,d:L.d};draw()}
+function pick(i){lv=i;prog=[];busy=false;$("msg").textContent="";renderAll();reset()}
+function renderAll(){
+ $("tabs").innerHTML="";
+ levels.forEach(function(L,i){var b=document.createElement("button");b.className="tab"+(i==lv?" on":"");b.textContent=L.n;b.onclick=function(){if(!busy)pick(i)};$("tabs").appendChild(b)});
+ $("task").textContent=levels[lv].t;
+ var p=$("pal");p.innerHTML="";
+ Object.keys(cmds).forEach(function(k){var b=document.createElement("button");b.className="blk"+(cmds[k].loop||k=="e"?" loop":"");b.textContent=cmds[k].l;b.onclick=function(){if(!busy){prog.push(k);renderProg()}};p.appendChild(b)});
+ renderProg();
+}
+function renderProg(hi){
+ var p=$("prog");p.innerHTML="";
+ if(!prog.length){p.innerHTML='<div class="empty">Блоктарды жоғарыдан таңда 👆</div>';return}
+ var ind=0;
+ prog.forEach(function(k,i){
+  if(k=="e")ind=Math.max(0,ind-1);
+  var d=document.createElement("div");d.className="step"+(hi===i?" run":"");d.style.marginLeft=(ind*22)+"px";
+  d.innerHTML="<span>"+(i+1)+". "+cmds[k].l+"</span>";
+  var x=document.createElement("button");x.textContent="✕";x.onclick=function(){if(!busy){prog.splice(i,1);renderProg()}};
+  d.appendChild(x);p.appendChild(d);
+  if(cmds[k].loop)ind++;
+ });
+}
+function isWall(x,y){
+ if(x<0||y<0||x>=W||y>=H)return true;
+ return levels[lv].w.some(function(w){return w[0]==x&&w[1]==y});
+}
+function draw(){
+ var L=levels[lv];cx.clearRect(0,0,480,400);
+ var st=getComputedStyle(document.documentElement);
+ var bd=st.getPropertyValue("--bd").trim()||"#ccc",wl=st.getPropertyValue("--wall").trim()||"#475569";
+ cx.strokeStyle=bd;cx.lineWidth=1;
+ for(var i=0;i<=W;i++){cx.beginPath();cx.moveTo(i*S,0);cx.lineTo(i*S,H*S);cx.stroke()}
+ for(var j=0;j<=H;j++){cx.beginPath();cx.moveTo(0,j*S);cx.lineTo(W*S,j*S);cx.stroke()}
+ cx.fillStyle=wl;
+ L.w.forEach(function(w){cx.fillRect(w[0]*S+4,w[1]*S+4,S-8,S-8)});
+ cx.font="44px serif";cx.textAlign="center";cx.textBaseline="middle";
+ cx.fillText("🚩",L.fx*S+S/2,L.fy*S+S/2);
+ cx.save();cx.translate(rb.x*S+S/2,rb.y*S+S/2);cx.rotate(rb.d*Math.PI/2);
+ cx.fillStyle="#f59e0b";cx.fillRect(-24,-28,48,56);
+ cx.fillStyle="#222";cx.fillRect(-30,-24,8,20);cx.fillRect(22,-24,8,20);cx.fillRect(-30,8,8,20);cx.fillRect(22,8,8,20);
+ cx.fillStyle="#fff";cx.beginPath();cx.moveTo(0,-34);cx.lineTo(-12,-14);cx.lineTo(12,-14);cx.fill();
+ cx.restore();
+}
+function beep(){
+ try{var a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator();o.connect(a.destination);o.frequency.value=660;o.start();setTimeout(function(){o.stop();a.close()},200)}catch(e){}
+}
+function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function expand(){
+ // returns flat list of {k,i} or null if loops are unbalanced
+ function walk(a,b){
+  var out=[],i=a;
+  while(i<b){
+   var k=prog[i];
+   if(cmds[k].loop){
+    var dep=1,j=i+1;
+    while(j<b&&dep>0){if(cmds[prog[j]].loop)dep++;if(prog[j]=="e")dep--;j++}
+    if(dep>0)return null;
+    var inner=walk(i+1,j-1);if(inner===null)return null;
+    for(var c=0;c<cmds[k].loop;c++)out=out.concat(inner);
+    i=j;
+   }else if(k=="e"){return null}
+   else{out.push({k:k,i:i});i++}
+  }
+  return out;
+ }
+ return walk(0,prog.length);
+}
+async function run(){
+ if(busy)return;
+ var m=$("msg");
+ if(!prog.length){m.textContent="Алдымен блоктар қос! 🙂";return}
+ var list=expand();
+ if(list===null){m.textContent="⚠ «Қайталау» блогының соңына «Цикл соңы» қосу керек.";return}
+ busy=true;reset();m.textContent="Робот жүріп барады...";
+ var L=levels[lv],dx=[0,1,0,-1],dy=[-1,0,1,0];
+ for(var n=0;n<list.length;n++){
+  var s=list[n];renderProg(s.i);
+  if(s.k=="L")rb.d=(rb.d+3)%4;
+  else if(s.k=="R")rb.d=(rb.d+1)%4;
+  else if(s.k=="s")beep();
+  else{
+   var sg=s.k=="f"?1:-1,nx=rb.x+dx[rb.d]*sg,ny=rb.y+dy[rb.d]*sg;
+   if(isWall(nx,ny)){m.textContent="💥 Робот кедергіге соғылды! Қайта көр.";busy=false;renderProg();return}
+   rb.x=nx;rb.y=ny;
+  }
+  draw();await wait(450);
+ }
+ busy=false;renderProg();
+ if(rb.x==L.fx&&rb.y==L.fy){
+  m.textContent="🎉 Жарайсың! Робот жалауға жетті!";
+  if(lv<levels.length-1)m.textContent+=" Келесі тапсырмаға өт.";
+ }else m.textContent="🤔 Робот жалауға жете алмады. Бағдарламаны түзетіп көр.";
+}
+$("run").onclick=run;
+$("undo").onclick=function(){if(!busy){prog.pop();renderProg()}};
+$("clear").onclick=function(){if(!busy){prog=[];$("msg").textContent="";renderProg();reset()}};
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+renderAll();reset();
+</script>
+</body>
+</html>
